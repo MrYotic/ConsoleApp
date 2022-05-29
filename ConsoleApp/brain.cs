@@ -1,6 +1,7 @@
-﻿using System.Numerics;
+﻿global using static FuckSharp;
+using System.Numerics;
 public static class FuckSharp
-{
+{    
     #region Console
     public static dynamic WL { set => Console.WriteLine(value.ToString()); }
     public static dynamic W { set => Console.Write(value.ToString()); }
@@ -115,6 +116,7 @@ public static class FuckSharp
     }
     #endregion
     #region Linq
+    public static TResult Ex<TSource, TResult>(this TSource source, Func<TSource, TResult> selector) => selector(source);
     public static string sW(this string str, Func<char, bool> predicate) => new string(str.Where(predicate).ToArray());
     public static string sW(this string str, char predicate) => new string(str.Where(z => z == predicate).ToArray());
     public static string sW(this string str, string predicate) => new string(str.Where(z => predicate.Contains(z)).ToArray());
@@ -123,11 +125,18 @@ public static class FuckSharp
     public static int sC(this string str, string predicate) => str.Count(z => predicate.Contains(z));
     #endregion
     #region String
+    public static bool isD(this char @char) => char.IsDigit(@char);
+    public static bool isL(this char @char) => char.IsLetter(@char);
     public static string R(this string @string, char oldChar, char newChar) => @string.Replace(oldChar, newChar);
     public static string R(this string @string, string oldChar, char newChar) => @string.Replace(oldChar, newChar.tS());
     public static string R(this string @string, char oldChar, string newChar) => @string.Replace(oldChar.tS(), newChar);
     public static string R(this string @string, string oldChar, string newChar) => @string.Replace(oldChar, newChar);
     public static string bTS(this byte[] bytes) => new string(bytes.Select(z => (char)z).ToArray());
+    public static string bTS(this char[] chars) => new string(chars);
+    public static string bTS(this List<byte> bytes) => new string(bytes.Select(z => (char)z).ToArray());
+    public static string bTS(this List<char> chars) => new string(chars.ToArray());
+    public static string bTS(this IEnumerable<byte> bytes) => new string(bytes.Select(z => (char)z).ToArray());
+    public static string bTS(this IEnumerable<char> chars) => new string(chars.ToArray());
     #endregion
     #region BrainFuck
     public class BF

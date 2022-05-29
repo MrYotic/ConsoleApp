@@ -14,6 +14,8 @@ public static class ConsoleHandler
 {
     public delegate void MouseHandler();
     public static event MouseHandler? MouseUpdate;
+    public delegate void PressKeyHandler(bool down, char @char, ushort key, int state);
+    public static event PressKeyHandler? PressKey;
     public static class Mouse
     {
         public static ushort X { get => record.MouseEvent.dwMousePosition.X; }
@@ -47,7 +49,12 @@ public static class ConsoleHandler
             while (true)
             {
                 if (!ReadConsoleInput(handle, ref record, 1, ref recordLen)) { throw new Win32Exception(); }
-                MouseUpdate?.Invoke();
+                if(record.EventType == 1)
+                {
+                    PressKey?.Invoke(Keyboard.KeyDown, Keyboard.Char, Keyboard.KeyCode, Keyboard.KeyState);
+                }
+                else if(record.EventType == 2)
+                    MouseUpdate?.Invoke();
                 Thread.Sleep(25);
             }
         }).Start();
