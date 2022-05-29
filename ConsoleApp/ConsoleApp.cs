@@ -7,36 +7,26 @@ public class ConsoleApp
     }
     private List<Line> Lines = new List<Line>();
     public Line Now { get => this[CCPY]; set => this[CCPY] = value; }
-    private int index = 0;
-    public int Index {
-        get => index;
-        set
-        {
-            CCPY = value;
-            index = value;
-        }
-    }
     public ConsoleApp Clear()
     {
         CC();
-        Index = 0;
+        CCPY = 0;
         Lines = new List<Line>();
         return this;
     }
     public ConsoleApp Skip(int count = 1)
     {
-        Index += count;
-        _ = this[Index];
+        CCPY += count;
         return this;
     }
-    public Line Next { get => this[++Index]; }
+    public Line Next { get => this[++CCPY]; }
     public ConsoleApp WriteLine(params dynamic[] args)
     {
-        this[Index].Write(args);
-        _ = this[++Index];
+        this[++CCPY].Write(args);
         return this;
     }
-    public Line this[int index] 
+    public Line Update(params dynamic[] args) => Now.Update(args);
+    public Line this[int index]
     {
         get
         {
@@ -55,7 +45,7 @@ public class ConsoleApp
             {
                 Lines.Add(new(index, this));
                 f = Lines.FindIndex(z => z.index == index);
-            }            
+            }
             Lines[f] = value;
         }
     }
@@ -72,12 +62,13 @@ public class ConsoleApp
         Magenta,
         DarkBlue,
         DarkCyan,
+        DarkGray,
         DarkGreen,
         DarkMagenta,
         DarkRed,
         DarkYellow,
     }
-    public static Dictionary<Color, ConsoleColor> ConsoleColors = new Dictionary<Color, ConsoleColor> 
+    public static Dictionary<Color, ConsoleColor> ConsoleColors = new Dictionary<Color, ConsoleColor>
     {
         { Color.Green, ConsoleColor.Green },
         { Color.White, ConsoleColor.White },
@@ -89,6 +80,7 @@ public class ConsoleApp
         { Color.Magenta, ConsoleColor.Magenta },
         { Color.DarkBlue, ConsoleColor.DarkBlue },
         { Color.DarkCyan, ConsoleColor.DarkCyan },
+        { Color.DarkGray, ConsoleColor.DarkGray },
         { Color.DarkGreen, ConsoleColor.DarkGreen },
         { Color.DarkMagenta, ConsoleColor.DarkMagenta },
         { Color.DarkRed, ConsoleColor.DarkRed },
@@ -157,20 +149,25 @@ public class ConsoleApp
             CCP = (0, index);
             args.ToList().ForEach(z =>
             {
-                if(z is Color)
+                if (z is Color)
                 {
                     CFC = ConsoleColors[(Color)z];
                 }
                 else
                 {
-                    string str = z.ToString();                    
+                    string str = z.ToString();
                     W = str;
                     Content += str;
                     xPos += str.Length;
                 }
             });
-            W = "".PadRight(oldContentLength, ' ');
+            if (oldContentLength - Content.Length > 0)
+                W = "".PadRight(oldContentLength - Content.Length, ' ');
             return this;
+        }
+        public void WriteData()
+        {
+            W = $"[{DateTime.Now}]  ";
         }
         public Line Clear()
         {
