@@ -117,6 +117,7 @@ public static class FuckSharp
     #endregion
     #region Linq
     public static TResult Ex<TSource, TResult>(this TSource source, Func<TSource, TResult> selector) => selector(source);
+    public static void Ex<TSource>(this TSource source, Action<TSource> action) => action(source);
     public static string sW(this string str, Func<char, bool> predicate) => new string(str.Where(predicate).ToArray());
     public static string sW(this string str, char predicate) => new string(str.Where(z => z == predicate).ToArray());
     public static string sW(this string str, string predicate) => new string(str.Where(z => predicate.Contains(z)).ToArray());

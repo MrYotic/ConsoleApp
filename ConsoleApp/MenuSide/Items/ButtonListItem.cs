@@ -3,11 +3,11 @@ using static MenuItem;
 
 public class ButtonListItem : BaseMenuItem
 {
-    public ButtonListItem(string line) : base(line, MenuOptions.Hide)
+    public ButtonListItem(string line, int x = 0, int y = 0) : base(line, x, y)
     {
         Line = line;
     }
-    public ButtonListItem(string line, params (string name, Action action)[] actions) : this(line)
+    public ButtonListItem(string line, int x = 0, int y = 0, params (string name, Action action)[] actions) : this(line, x, y)
     {
         Units = actions.Select(z => new ListUnit(z.name, z.action)).ToList();
     }

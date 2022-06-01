@@ -3,14 +3,12 @@ using static MenuItem;
 
 public class ButtonItem : BaseMenuItem
 {
-    public ButtonItem(string line, Action action, MenuOptions options = MenuOptions.Hide) : base(line, options)
+    public ButtonItem(string line, Action action, int x = 0, int y = 0) : base(line, x, y)
     {
         Line = line;
         Action = action;
-        Options = options;
     }
     public Action Action;
-    public MenuOptions Options { get; set; }
 
     public override int Length => Line.Length;
 

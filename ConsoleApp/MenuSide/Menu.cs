@@ -1,17 +1,12 @@
 ﻿using static ConsoleHandler;
 using static ConsoleApp;
 using static FuckSharp;
+using System.Media;
 
 public class Menu : IDisposable
 {
     public Menu() {}
-    private List<BaseMenuItem> items = new List<BaseMenuItem>();
-    public void Add(params BaseMenuItem[] args)
-    {
-        items.AddRange(args);
-        int index = 0;
-        items.ForEach(z => z.Index = index++);
-    }
+    public ItemCollection Items { get; set; } = new ItemCollection();
     public (int X, int Y) startPoint = (0, 0);
     private Color textColor = Color.Gray;
     public Color TextColor
@@ -49,37 +44,37 @@ public class Menu : IDisposable
         int cy = Console.WindowHeight / 2;
         int w = Console.WindowWidth;
         int h = Console.WindowHeight;
-        for(int i = 0; i < items.Count; i++)
+        for(int i = 0; i < Items.Count; i++)
         {
             switch (hAlign)
             {
                 case HorAlign.Left:
-                    items[i].X = startPoint.X;
+                    Items[i].X = startPoint.X + Items[i].BaseX;
                     break;
                 case HorAlign.Center:
-                    items[i].X = cx - items[i].Line.Length / 2;
+                    Items[i].X = cx - Items[i].Line.Length / 2;
                     break;
                 case HorAlign.Right:
-                    items[i].X = w - startPoint.X;
+                    Items[i].X = w - startPoint.X - Items[i].BaseX;
                     break;
             }
             switch (vAlign)
             {
                 case VerAlign.Top:
-                    items[i].Y = items[i].Index + startPoint.Y;
+                    Items[i].Y = Items[i].BaseY + startPoint.Y;
                     break;
                 case VerAlign.Center:
-                    if(i < items.Count / 2)
-                        items[i].Y = cy - (items.Count / 2 - items[i].Index);
-                    else items[i].Y = cy + items[i].Index - items.Count / 2;      
+                    if(i < Items.Count / 2)
+                        Items[i].Y = cy - (Items.Count / 2 - Items[i].BaseY);
+                    else Items[i].Y = cy + Items[i].BaseY - Items.Count / 2;      
                     break;
                 case VerAlign.Bottom:
-                    items[i].Y = h - items[i].Index - startPoint.Y;
+                    Items[i].Y = h - Items[i].BaseY - startPoint.Y;
                     break;
             }
         }
     }
-    public void Render() => items.ForEach(z => z.Render(TextColor));
+    public void Render() => Items.ToList().ForEach(z => z.Render(TextColor));
     public void Close()
     {
         MouseUpdate -= Mouse_Update;
@@ -99,13 +94,34 @@ public class Menu : IDisposable
         Render();
         MouseUpdate += Mouse_Update;
         PressKey += KeyPress_Update;
-        items.Where(z => z is InputItem).ToList().ForEach(z =>
+        Items.ToList().Where(z => z is InputItem).ToList().ForEach(z =>
         {
-            CCP = (startPoint.X + z.Line.Length, z.Index + 1);
-            ((InputItem)items[z.Index]).Value = Console.ReadLine();
+            string value;
+            while (true)
+            {
+                CCP = (z.X + z.Line.Length, z.Y);
+                CFC = ConsoleColor.White;
+                value = Console.ReadLine();
+                string? validated = ((InputItem)z).Validate(value);
+                if (validated == null)
+                {
+                    ((InputItem)z).Value = value;
+                    CCP = (z.X + z.Line.Length, z.Y + 1);
+                    CFC = ConsoleColor.Green;
+                    W = value + "                 ";
+                    CCP = (0, 0);
+                    break;                
+                }
+                else
+                {
+                    CCP = (z.X + z.Line.Length, z.Y + 1);
+                    CFC = ConsoleColor.Red;
+                    W = "     " + validated + Enumerable.Repeat(' ', value.Length + validated.Length + 5).bTS();                     
+                }
+            }
         });
     }
-    private int lastEntered = -1, inputIndex = -1;
+    private int lastEntered = -1, inputIndex = -1, lastIndexButtonEnter = -1;
     public void KeyPress_Update(bool down, char @char, ushort key, int state)
     {
         return;
@@ -115,89 +131,31 @@ public class Menu : IDisposable
             W = down + "|" + @char + "|" + key + "|" + state + "             ";
             if (!new int[]{ 60, 70, 112, 96 }.Contains(state))
                 return;
-            InputItem item = (InputItem)items[inputIndex];
+            InputItem item = Items[inputIndex].AsInput;
             if (!down && key == 8)
             {
                 if(item.Value.Length > 0)
                 {
-                    ((InputItem)items[inputIndex]).Value = item.Value.Remove(item.Value.Length - 1);
-                    CCP = (startPoint.X + item.Value.Length + items[inputIndex].Line.Length, inputIndex + 1);
+                    Items[inputIndex].AsInput.Value = item.Value.Remove(item.Value.Length - 1);
+                    CCP = (item.X + item.Value.Length + Items[inputIndex].Line.Length, inputIndex + 1);
                     W = default(char);
-                    CCP = (startPoint.X + item.Value.Length + items[inputIndex].Line.Length, inputIndex + 1);
+                    CCP = (item.X + item.Value.Length + Items[inputIndex].Line.Length, inputIndex + 1);
                 }
             }
             else if(((down && state == 112) || !down) && (char.IsLetter(@char) || char.IsDigit(@char) || @char == 32))
             {
-                CCP = (startPoint.X + item.Value.Length + items[inputIndex].Line.Length, inputIndex + 1);
+                CCP = (item.X + item.Value.Length + Items[inputIndex].Line.Length, inputIndex + 1);
                 W = @char;
-                ((InputItem)items[inputIndex]).Value += @char;
+                Items[inputIndex].AsInput.Value += @char;
             }          
         }
     }
     public void Mouse_Update()
     {
-        for (int i = 0; i < items.Count; i++)
+        BaseMenuItem? item = Items.ToList().Find(z => Intersection(z.Y, z.X, z.X + z.Length));
+        if(item != null)
         {
-            if(Intersection(items[i].Y, items[i].X, items[i].X + items[i].Length))
-            {
-                if (lastEntered != -1 && !MenuItem.UnUpdaterTypes.Contains(items[i].GetType())) items[lastEntered].Render(textColor);
-                lastEntered = i;
-                if (items[i] is ButtonItem)
-                {
-                    if (Mouse.State == 0)
-                    {
-                        items[i].Render(MenuItem.EnterColor);
-                    }
-                    else if (Mouse.State == 1)
-                    {
-                        items[i].Render(MenuItem.PressColor);
-                        ((ButtonItem)items[i]).Invoke(this);
-                    }
-                    break;
-                }
-                else if(items[i] is ButtonListItem)
-                {
-                    int index = -1;
-                    ButtonListItem item = (ButtonListItem)items[i];
-                    for (int o = 0; o < item.Units.Count; o++)
-                    {
-                        int start = item.Line.Length + 2 + Enumerable.Range(0, o).Select(z => item.Units[z].Name.Length + 1).Sum();
-                        if (Intersection(start, start + item.Units[o].Name.Length))
-                        {
-                            index = o;
-                            break;
-                        }
-                    }
-                    if(index != -1)
-                    {
-                        if (Mouse.State == 0)
-                        {
-                            item.Render(MenuItem.EnterColor, index);
-                        }
-                        else if (Mouse.State == 1)
-                        {
-                            item.Render(MenuItem.PressColor, index);
-                            item.Invoke(index, this);
-                        }
-                    }
-                    break;
-                }
-                else if(items[i] is InputItem)
-                {
-                    if (Mouse.State == 1)
-                    {
-                        inputIndex = i;
-                        CCP = (startPoint.X + ((InputItem)items[i]).Value.Length + items[inputIndex].Line.Length, inputIndex + 1);
-                    }
-                    break;
-                }
-                if (lastEntered != -1)
-                {
-                    if (!MenuItem.UnUpdaterTypes.Contains(items[lastEntered].GetType()))
-                        items[lastEntered].Render(textColor);
-                    lastEntered = -1;
-                }
-            }
+            if(Mouse.KeyState)
         }
     }
     private bool Intersection(int y, int xs, int xe) => Mouse.Y == y && Mouse.X >= xs && Mouse.X <= xe;

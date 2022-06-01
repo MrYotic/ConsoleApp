@@ -3,7 +3,7 @@ using static MenuItem;
 
 public class LabelItem : BaseMenuItem
 {
-    public LabelItem(string line) : base(line, MenuOptions.None) => Line = line;
+    public LabelItem(string line, int x = 0, int y = 0) : base(line, x, y) => Line = line;
     public override int Length => Line.Length;
     public override void Render(Color color)
     {

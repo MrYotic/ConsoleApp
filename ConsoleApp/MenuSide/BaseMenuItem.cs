@@ -8,15 +8,22 @@ using static MenuItem;
 
 public abstract class BaseMenuItem
 {
-    protected BaseMenuItem(string line, MenuOptions options = MenuOptions.None)
+    protected BaseMenuItem(string line, int x, int y)
     {
-        Line = line;
-        Options = options;
+        BaseX = x;
+        BaseY = y;
+        Line = Name = line;
     }
+    public int BaseX { get; set; }
+    public int BaseY { get; set; }
     public int X = 0, Y = 0;
-    public int Index { get; set; }
     public string Line { get; set; }
-    public MenuOptions Options { get; set; }
+    public string Name { get; set; }
+    public MenuOptions Options { get; set; } = MenuOptions.Hide;
     public abstract int Length { get; }
     public abstract void Render(Color color);
+    public InputItem AsInput => (InputItem)this;
+    public LabelItem AsLabel => (LabelItem)this;
+    public ButtonListItem AsButtonList => (ButtonListItem)this;
+    public ButtonItem AsButton => (ButtonItem)this;
 }
